@@ -5,11 +5,12 @@ import com.example.yoyakhaezoom.dto.SignupRequestDto;
 import com.example.yoyakhaezoom.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @Tag(name = "1. 사용자 인증 API", description = "사용자 회원가입 및 로그인 처리")
 @RestController
@@ -26,10 +27,11 @@ public class UserController {
         return ResponseEntity.ok("회원가입 성공");
     }
 
-    @Operation(summary = "로그인", description = "사용자 ID, 비밀번호로 로그인을 진행하고 Response Header에 JWT 토큰을 반환합니다.")
+    @Operation(summary = "로그인", description = "사용자 ID, 비밀번호로 로그인을 진행하고 Response Body에 JWT 토큰과 사용자 ID를 반환합니다.")
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequestDto requestDto, HttpServletResponse res) {
-        userService.login(requestDto, res);
-        return ResponseEntity.ok("로그인 성공");
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequestDto requestDto) {
+        Map<String, Object> responseData = userService.login(requestDto);
+
+        return ResponseEntity.ok(responseData);
     }
 }

@@ -5,11 +5,13 @@ import com.example.yoyakhaezoom.dto.SignupRequestDto;
 import com.example.yoyakhaezoom.entity.User;
 import com.example.yoyakhaezoom.repository.UserRepository;
 import com.example.yoyakhaezoom.util.JwtUtil;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +43,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public void login(LoginRequestDto requestDto, HttpServletResponse res) {
+    public Map<String, Object> login(LoginRequestDto requestDto) {
         String username = requestDto.getUsername();
         String password = requestDto.getPassword();
 
@@ -54,6 +56,11 @@ public class UserService {
         }
 
         String token = jwtUtil.createToken(user.getUsername());
-        res.addHeader(JwtUtil.AUTHORIZATION_HEADER, token);
+
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("userId", user.getId());
+        responseData.put("token", token);
+
+        return responseData;
     }
 }
