@@ -46,10 +46,14 @@ public class ArticleController {
         return ResponseEntity.ok(articles);
     }
 
-    @Operation(summary = "특정 요약 기사 상세 조회", description = "ID를 이용하여 특정 요약 기사 한 개의 상세 정보(댓글 포함)를 조회합니다.")
+    @Operation(summary = "특정 요약 기사 상세 조회", description = "ID를 이용하여 특정 요약 기사 한 개의 상세 정보(좋아요, 북마크 여부 포함)를 조회합니다.")
     @GetMapping("/articles/{id}")
-    public ResponseEntity<ArticleResponseDto> getArticle(@PathVariable Long id) {
+    public ResponseEntity<ArticleResponseDto> getArticle(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
         Article article = articleService.getArticle(id);
+
         return ResponseEntity.ok(new ArticleResponseDto(article));
     }
 }

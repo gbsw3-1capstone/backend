@@ -9,14 +9,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Comment extends Timestamped {
-
+@Table(name = "article_like") // 'like'는 예약어일 수 있으므로 테이블명 명시
+public class Like {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -27,8 +24,7 @@ public class Comment extends Timestamped {
     private Article article;
 
     @Builder
-    public Comment(String content, User user, Article article) {
-        this.content = content;
+    public Like(User user, Article article) {
         this.user = user;
         this.article = article;
     }
