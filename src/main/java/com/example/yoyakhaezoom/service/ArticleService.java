@@ -15,11 +15,13 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j(topic = "ArticleService")
 @Service
@@ -55,13 +57,25 @@ public class ArticleService {
         }
         String content = articleBody.text();
 
+        String imageUrl = Optional.ofNullable(doc.select("meta[property=og:image]").first())
+                .map(element -> element.attr("content"))
+                .orElse(null); // 이미지가 없는 경우 null
+
+        String category = UriComponentsBuilder.fromUriString(url)
+                .build().getQueryParams().getFirst("section");
+        if (category != null && category.contains("/")) {
+            category = category.split("/")[0];
+        }
+
         log.info("Requesting summary to OpenAI for title: {}", title);
-        String summary = getSummaryFromOpenAI(title, content);
+        String jsonSummary = getSummaryFromOpenAI(title, content);
 
         Article article = Article.builder()
                 .originalUrl(url)
                 .title(title)
-                .summary(summary)
+                .summary(jsonSummary)
+                .imageUrl(imageUrl)
+                .category(category)
                 .build();
 
         Article savedArticle = articleRepository.save(article);
@@ -75,10 +89,22 @@ public class ArticleService {
         headers.setBearerAuth(apiKey);
 
         String prompt = String.format(
-                "너는 10대 청소년에게 어려운 뉴스를 설명해주는 친절한 IT 전문가 선배야. " +
-                        "다음 기사의 제목은 '%s'이고 내용은 아래와 같아. " +
-                        "이 기사 내용을 중학생도 이해할 수 있도록 전문 용어는 쉽게 풀어서 설명해주고, " +
-                        "핵심 내용만 3~4문장으로 간결하게 요약해줘: \n\n%s",
+                "[지시문]\n" +
+                        "당신은 10대 청소년의 눈높이에 맞춰 최신 뉴스를 쉽고 재미있게 설명해주는 '요약해줌' 서비스의 AI 뉴스 튜터입니다.\n" +
+                        "아래의 [기사 제목]과 [기사 내용]을 읽고, 반드시 다음 [출력 형식]에 맞춰 유효한 JSON 객체로만 응답해주세요.\n" +
+                        "JSON 코드 블록이나 다른 설명 없이, 순수한 JSON 텍스트만 출력해야 합니다.\n\n" +
+                        "[기사 제목]\n%s\n\n" +
+                        "[기사 내용]\n%s\n\n" +
+                        "[출력 형식]\n" +
+                        "{\n" +
+                        "  \"summaryHighlight\": \"(기사 전체를 한 문장으로 매우 매력적이고 흥미롭게 요약)\",\n" +
+                        "  \"coreSummary\": \"(3~4문장의 핵심 요약을 친근한 해요체로 작성)\",\n" +
+                        "  \"terms\": [\n" +
+                        "    { \"term\": \"(본문의 어려운 용어 1)\", \"explanation\": \"(용어1의 쉬운 설명)\" },\n" +
+                        "    { \"term\": \"(본문의 어려운 용어 2)\", \"explanation\": \"(용어2의 쉬운 설명)\" }\n" +
+                        "  ],\n" +
+                        "  \"discussionPoint\": \"(이 뉴스와 관련해 생각해볼 만한 흥미로운 질문 1가지)\"\n" +
+                        "}",
                 title,
                 content.substring(0, Math.min(content.length(), 3500))
         );
@@ -90,8 +116,12 @@ public class ArticleService {
         Map<String, Object> body = new HashMap<>();
         body.put("model", "gpt-3.5-turbo");
         body.put("messages", List.of(message));
-        body.put("max_tokens", 500);
-        body.put("temperature", 0.5);
+        body.put("max_tokens", 1000);
+        body.put("temperature", 0.3);
+
+        Map<String, String> responseFormat = new HashMap<>();
+        responseFormat.put("type", "json_object");
+        body.put("response_format", responseFormat);
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 

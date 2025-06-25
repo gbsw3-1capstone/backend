@@ -15,7 +15,7 @@ public class Article extends Timestamped {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String originalUrl;
 
     @Column(nullable = false, length = 500)
@@ -24,10 +24,18 @@ public class Article extends Timestamped {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String summary;
 
+    @Column
+    private String imageUrl;
+
+    @Column
+    private String category;
+
     @Builder
-    public Article(String originalUrl, String title, String summary) {
+    public Article(String originalUrl, String title, String summary, String imageUrl, String category) {
         this.originalUrl = originalUrl;
         this.title = title;
         this.summary = summary;
+        this.imageUrl = imageUrl;
+        this.category = category;
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Tag(name = "2. 기사 API", description = "뉴스 기사 요약 및 조회 처리")
 @RestController
@@ -42,7 +43,7 @@ public class ArticleController {
     public ResponseEntity<List<ArticleResponseDto>> getArticles() {
         List<ArticleResponseDto> articles = articleService.getArticles().stream()
                 .map(ArticleResponseDto::new)
-                .toList();
+                .collect(Collectors.toList());
         return ResponseEntity.ok(articles);
     }
 
@@ -53,7 +54,6 @@ public class ArticleController {
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         Article article = articleService.getArticle(id);
-
         return ResponseEntity.ok(new ArticleResponseDto(article));
     }
 }

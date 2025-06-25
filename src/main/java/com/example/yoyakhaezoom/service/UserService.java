@@ -1,7 +1,7 @@
 package com.example.yoyakhaezoom.service;
 
 import com.example.yoyakhaezoom.dto.LoginRequestDto;
-import com.example.yoyakhaezoom.dto.LoginResponseDto; // DTO 임포트
+import com.example.yoyakhaezoom.dto.LoginResponseDto;
 import com.example.yoyakhaezoom.dto.SignupRequestDto;
 import com.example.yoyakhaezoom.entity.User;
 import com.example.yoyakhaezoom.repository.UserRepository;
@@ -44,7 +44,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public LoginResponseDto login(LoginRequestDto requestDto) { // 반환 타입을 LoginResponseDto로 변경
+    public LoginResponseDto login(LoginRequestDto requestDto) {
         String username = requestDto.getUsername();
         String password = requestDto.getPassword();
 
@@ -58,7 +58,6 @@ public class UserService {
 
         String token = jwtUtil.createToken(user.getUsername());
 
-        // LoginResponseDto 객체를 직접 생성하여 반환
         return new LoginResponseDto(token, user.getId(), user.getUsername(), user.getNickname());
     }
 }

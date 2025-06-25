@@ -22,16 +22,17 @@ public class ScheduledCrawlingService {
     public void crawlLatestNews() {
         log.info("자동 뉴스 크롤링 및 요약을 시작합니다.");
 
-        String newsListPageUrl = "https://www.yna.co.kr/international/all";
+        String newsListPageUrl = "https://www.yna.co.kr/";
 
         try {
             Document doc = Jsoup.connect(newsListPageUrl).get();
-            Elements articleLinks = doc.select("div.list div.item-box a");
+
+            Elements articleLinks = doc.select("a.tit-news");
 
             for (Element link : articleLinks) {
                 String articleUrl = link.absUrl("href");
 
-                if (articleRepository.findByOriginalUrl(articleUrl).isEmpty()) {
+                if (articleUrl.startsWith("http") && articleRepository.findByOriginalUrl(articleUrl).isEmpty()) {
                     log.info("새로운 뉴스 발견: {}", articleUrl);
 
                     try {
