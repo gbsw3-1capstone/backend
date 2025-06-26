@@ -30,6 +30,9 @@ public class Article extends Timestamped {
     @Column
     private String category;
 
+    @Column(nullable = false)
+    private int viewCount = 0;
+
     @Builder
     public Article(String originalUrl, String title, String summary, String imageUrl, String category) {
         this.originalUrl = originalUrl;
@@ -37,5 +40,9 @@ public class Article extends Timestamped {
         this.summary = summary;
         this.imageUrl = imageUrl;
         this.category = category;
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
     }
 }

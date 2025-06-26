@@ -9,6 +9,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -59,7 +61,7 @@ public class ArticleService {
 
         String imageUrl = Optional.ofNullable(doc.select("meta[property=og:image]").first())
                 .map(element -> element.attr("content"))
-                .orElse(null); // 이미지가 없는 경우 null
+                .orElse(null);
 
         String category = UriComponentsBuilder.fromUriString(url)
                 .build().getQueryParams().getFirst("section");
@@ -145,10 +147,29 @@ public class ArticleService {
         return articleRepository.findAllByOrderByCreatedAtDesc();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Article getArticle(Long id) {
-        return articleRepository.findById(id).orElseThrow(
+        Article article = articleRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("선택한 게시물은 존재하지 않습니다.")
         );
+        article.increaseViewCount();
+        return article;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Article> getRankedArticles(String sortBy, int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+
+        switch (sortBy.toLowerCase()) {
+            case "likes":
+                return articleRepository.findTopArticlesByLikes(pageable);
+            case "bookmarks":
+                return articleRepository.findTopArticlesByBookmarks(pageable);
+            case "views":
+                return articleRepository.findTopArticlesByViewCount(pageable);
+            case "latest":
+            default:
+                return articleRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
     }
 }

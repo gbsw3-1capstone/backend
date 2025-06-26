@@ -3,6 +3,9 @@ package com.example.yoyakhaezoom.controller;
 import com.example.yoyakhaezoom.dto.ArticleResponseDto;
 import com.example.yoyakhaezoom.dto.SummarizeRequestDto;
 import com.example.yoyakhaezoom.entity.Article;
+import com.example.yoyakhaezoom.entity.User;
+import com.example.yoyakhaezoom.repository.BookmarkRepository;
+import com.example.yoyakhaezoom.repository.LikeRepository;
 import com.example.yoyakhaezoom.security.UserDetailsImpl;
 import com.example.yoyakhaezoom.service.ArticleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,7 +16,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Tag(name = "2. 기사 API", description = "뉴스 기사 요약 및 조회 처리")
@@ -23,6 +28,8 @@ import java.util.stream.Collectors;
 public class ArticleController {
 
     private final ArticleService articleService;
+    private final LikeRepository likeRepository;
+    private final BookmarkRepository bookmarkRepository;
 
     @Operation(summary = "뉴스 기사 요약 요청", description = "뉴스 기사 원문 URL을 받아 AI 요약을 요청하고 DB에 저장합니다. (로그인 필요)")
     @PostMapping("/articles/summarize")
@@ -35,16 +42,42 @@ public class ArticleController {
         }
 
         Article summarizedArticle = articleService.summarizeAndSaveArticle(requestDto);
-        return ResponseEntity.ok(new ArticleResponseDto(summarizedArticle));
+        return ResponseEntity.ok(new ArticleResponseDto(summarizedArticle, false, false));
     }
+
 
     @Operation(summary = "전체 요약 기사 목록 조회", description = "지금까지 요약된 모든 기사 목록을 최신순으로 조회합니다.")
     @GetMapping("/articles")
-    public ResponseEntity<List<ArticleResponseDto>> getArticles() {
-        List<ArticleResponseDto> articles = articleService.getArticles().stream()
-                .map(ArticleResponseDto::new)
+    public ResponseEntity<List<ArticleResponseDto>> getArticles(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        List<Article> articles = articleService.getArticles();
+
+        Set<Long> likedArticleIds = Collections.emptySet();
+        Set<Long> bookmarkedArticleIds = Collections.emptySet();
+
+        if (userDetails != null) {
+            User user = userDetails.getUser();
+            likedArticleIds = likeRepository.findAllByUser(user).stream()
+                    .map(like -> like.getArticle().getId())
+                    .collect(Collectors.toSet());
+            bookmarkedArticleIds = bookmarkRepository.findAllByUser(user).stream()
+                    .map(bookmark -> bookmark.getArticle().getId())
+                    .collect(Collectors.toSet());
+        }
+
+        final Set<Long> finalLikedIds = likedArticleIds;
+        final Set<Long> finalBookmarkedIds = bookmarkedArticleIds;
+
+        List<ArticleResponseDto> responseDtos = articles.stream()
+                .map(article -> new ArticleResponseDto(
+                        article,
+                        finalLikedIds.contains(article.getId()),
+                        finalBookmarkedIds.contains(article.getId())
+                ))
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(articles);
+
+        return ResponseEntity.ok(responseDtos);
     }
 
     @Operation(summary = "특정 요약 기사 상세 조회", description = "ID를 이용하여 특정 요약 기사 한 개의 상세 정보(좋아요, 북마크 여부 포함)를 조회합니다.")
@@ -54,6 +87,51 @@ public class ArticleController {
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         Article article = articleService.getArticle(id);
-        return ResponseEntity.ok(new ArticleResponseDto(article));
+        boolean isLiked = false;
+        boolean isBookmarked = false;
+
+        if (userDetails != null) {
+            User user = userDetails.getUser();
+            isLiked = likeRepository.findByUserAndArticle(user, article).isPresent();
+            isBookmarked = bookmarkRepository.findByUserAndArticle(user, article).isPresent();
+        }
+
+        return ResponseEntity.ok(new ArticleResponseDto(article, isLiked, isBookmarked));
+    }
+
+    @Operation(summary = "요약 기사 랭킹 조회", description = "정렬 기준(latest, likes, bookmarks, views)에 따라 기사 목록을 조회합니다.")
+    @GetMapping("/articles/ranking")
+    public ResponseEntity<List<ArticleResponseDto>> getArticleRanking(
+            @RequestParam(defaultValue = "latest") String sortBy,
+            @RequestParam(defaultValue = "5") int limit,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        List<Article> rankedArticles = articleService.getRankedArticles(sortBy, limit);
+
+        Set<Long> likedArticleIds = Collections.emptySet();
+        Set<Long> bookmarkedArticleIds = Collections.emptySet();
+
+        if (userDetails != null) {
+            User user = userDetails.getUser();
+            likedArticleIds = likeRepository.findAllByUser(user).stream()
+                    .map(like -> like.getArticle().getId())
+                    .collect(Collectors.toSet());
+            bookmarkedArticleIds = bookmarkRepository.findAllByUser(user).stream()
+                    .map(bookmark -> bookmark.getArticle().getId())
+                    .collect(Collectors.toSet());
+        }
+
+        final Set<Long> finalLikedIds = likedArticleIds;
+        final Set<Long> finalBookmarkedIds = bookmarkedArticleIds;
+
+        List<ArticleResponseDto> responseDtos = rankedArticles.stream()
+                .map(article -> new ArticleResponseDto(
+                        article,
+                        finalLikedIds.contains(article.getId()),
+                        finalBookmarkedIds.contains(article.getId())
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responseDtos);
     }
 }

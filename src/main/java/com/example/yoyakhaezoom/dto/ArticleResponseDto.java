@@ -19,8 +19,10 @@ public class ArticleResponseDto {
     private final String image;
     private final String news_source;
     private final String news_link;
+    private final boolean liked;
+    private final boolean bookmarked;
 
-    public ArticleResponseDto(Article article) {
+    public ArticleResponseDto(Article article, boolean liked, boolean bookmarked) {
         this.id = article.getId();
         this.title = article.getTitle();
         this.tag = article.getCategory();
@@ -33,9 +35,19 @@ public class ArticleResponseDto {
         AiSummaryDto aiSummary = parseAiSummary(article.getSummary());
         this.summary = aiSummary.getCoreSummary();
         this.summary_highlight = aiSummary.getSummaryHighlight();
+
+        this.liked = liked;
+        this.bookmarked = bookmarked;
     }
 
+    // public ArticleResponseDto(Article article) {
+    //     this(article, false, false);
+    // }
+
     private AiSummaryDto parseAiSummary(String jsonSummary) {
+        if (jsonSummary == null || jsonSummary.isEmpty()) {
+            return new AiSummaryDto();
+        }
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             return objectMapper.readValue(jsonSummary, AiSummaryDto.class);
@@ -45,7 +57,7 @@ public class ArticleResponseDto {
     }
 
     private String parseNewsSource(String url) {
-        if (url.contains("yna.co.kr")) {
+        if (url != null && url.contains("yna.co.kr")) {
             return "연합뉴스";
         }
         return "기타";
