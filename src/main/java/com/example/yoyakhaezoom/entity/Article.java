@@ -33,6 +33,12 @@ public class Article extends Timestamped {
     @Column(nullable = false)
     private int viewCount = 0;
 
+    @Column(nullable = false)
+    private long likeCount = 0;
+
+    @Column(nullable = false)
+    private long bookmarkCount = 0;
+
     @Builder
     public Article(String originalUrl, String title, String summary, String imageUrl, String category) {
         this.originalUrl = originalUrl;
@@ -44,5 +50,25 @@ public class Article extends Timestamped {
 
     public void increaseViewCount() {
         this.viewCount++;
+    }
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
+
+    public void increaseBookmarkCount() {
+        this.bookmarkCount++;
+    }
+
+    public void decreaseBookmarkCount() {
+        if (this.bookmarkCount > 0) {
+            this.bookmarkCount--;
+        }
     }
 }

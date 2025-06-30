@@ -28,10 +28,12 @@ public class BookmarkService {
 
         if (bookmarkOptional.isPresent()) {
             bookmarkRepository.delete(bookmarkOptional.get());
+            article.decreaseBookmarkCount();
             return "북마크가 취소되었습니다.";
         } else {
             Bookmark bookmark = Bookmark.builder().user(user).article(article).build();
             bookmarkRepository.save(bookmark);
+            article.increaseBookmarkCount();
             return "북마크에 추가되었습니다.";
         }
     }

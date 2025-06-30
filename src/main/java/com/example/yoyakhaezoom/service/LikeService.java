@@ -28,10 +28,12 @@ public class LikeService {
 
         if (likeOptional.isPresent()) {
             likeRepository.delete(likeOptional.get());
+            article.decreaseLikeCount();
             return "좋아요가 취소되었습니다.";
         } else {
             Like like = Like.builder().user(user).article(article).build();
             likeRepository.save(like);
+            article.increaseLikeCount();
             return "좋아요를 눌렀습니다.";
         }
     }

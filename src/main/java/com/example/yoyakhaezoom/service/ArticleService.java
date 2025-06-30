@@ -2,6 +2,8 @@ package com.example.yoyakhaezoom.service;
 
 import com.example.yoyakhaezoom.dto.SummarizeRequestDto;
 import com.example.yoyakhaezoom.entity.Article;
+import com.example.yoyakhaezoom.exception.CustomException;
+import com.example.yoyakhaezoom.exception.ErrorCode;
 import com.example.yoyakhaezoom.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -155,7 +157,7 @@ public class ArticleService {
     @Transactional
     public Article getArticle(Long id) {
         Article article = articleRepository.findById(id).orElseThrow(
-                () -> new IllegalArgumentException("선택한 게시물은 존재하지 않습니다.")
+                () -> new CustomException(ErrorCode.ARTICLE_NOT_FOUND)
         );
         article.increaseViewCount();
         return article;

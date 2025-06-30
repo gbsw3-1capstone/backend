@@ -4,15 +4,14 @@ import com.example.yoyakhaezoom.dto.LoginRequestDto;
 import com.example.yoyakhaezoom.dto.LoginResponseDto;
 import com.example.yoyakhaezoom.dto.SignupRequestDto;
 import com.example.yoyakhaezoom.entity.User;
+import com.example.yoyakhaezoom.exception.CustomException;
+import com.example.yoyakhaezoom.exception.ErrorCode;
 import com.example.yoyakhaezoom.repository.UserRepository;
 import com.example.yoyakhaezoom.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class UserService {
         String nickname = requestDto.getNickname();
 
         if (userRepository.findByUsername(username).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 ID입니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_ID);
         }
 
         String encodedPassword = passwordEncoder.encode(rawPassword);
@@ -49,7 +48,7 @@ public class UserService {
         String password = requestDto.getPassword();
 
         User user = userRepository.findByUsername(username).orElseThrow(
-                () -> new IllegalArgumentException("등록된 사용자가 없습니다.")
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
 
         if (!passwordEncoder.matches(password, user.getPassword())) {

@@ -1,7 +1,6 @@
 package com.example.yoyakhaezoom.exception;
 
 import com.example.yoyakhaezoom.dto.ErrorResponseDto;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,37 +9,42 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ErrorResponseDto> handleCustomException(CustomException ex) {
+        ErrorCode errorCode = ex.getErrorCode();
+        ErrorResponseDto errorResponse = ErrorResponseDto.builder()
+                .statusCode(errorCode.getHttpStatus().value())
+                .message(errorCode.getMessage())
+                .build();
+        return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDto> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
-
         ErrorResponseDto errorResponse = ErrorResponseDto.builder()
-                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .statusCode(ErrorCode.INVALID_PARAMETER.getHttpStatus().value())
                 .message(errorMessage)
                 .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(ErrorCode.INVALID_PARAMETER.getHttpStatus()).body(errorResponse);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponseDto> handleIllegalArgumentException(IllegalArgumentException ex) {
         ErrorResponseDto errorResponse = ErrorResponseDto.builder()
-                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .statusCode(ErrorCode.INVALID_PARAMETER.getHttpStatus().value())
                 .message(ex.getMessage())
                 .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(ErrorCode.INVALID_PARAMETER.getHttpStatus()).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleAllExceptions(Exception ex) {
-        ErrorResponseDto errorResponse = ErrorResponseDto.builder()
-                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("서버 내부에 오류가 발생했습니다.")
-                .build();
-
         ex.printStackTrace();
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        ErrorResponseDto errorResponse = ErrorResponseDto.builder()
+                .statusCode(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus().value())
+                .message(ErrorCode.INTERNAL_SERVER_ERROR.getMessage())
+                .build();
+        return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus()).body(errorResponse);
     }
 }
