@@ -24,7 +24,6 @@ public class JwtUtil {
     @Value("${jwt.secret.key}")
     private String secretKey;
     private Key key;
-    private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
     @PostConstruct
     public void init() {
@@ -39,7 +38,7 @@ public class JwtUtil {
                         .setSubject(username)
                         .setExpiration(new Date(date.getTime() + TOKEN_TIME))
                         .setIssuedAt(date)
-                        .signWith(key, signatureAlgorithm)
+                        .signWith(key)
                         .compact();
     }
 

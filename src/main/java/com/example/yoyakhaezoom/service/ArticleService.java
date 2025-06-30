@@ -52,6 +52,11 @@ public class ArticleService {
         Document doc = Jsoup.connect(url).get();
         String title = doc.title();
 
+        String suffixToRemove = " | 연합뉴스";
+        if (title.endsWith(suffixToRemove)) {
+            title = title.substring(0, title.length() - suffixToRemove.length());
+        }
+
         Element articleBody = doc.select("div.story-news").first();
         if (articleBody == null) {
             log.error("기사 본문을 찾을 수 없습니다. URL: {}", url);

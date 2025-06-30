@@ -8,6 +8,7 @@ import com.example.yoyakhaezoom.repository.BookmarkRepository;
 import com.example.yoyakhaezoom.repository.LikeRepository;
 import com.example.yoyakhaezoom.security.UserDetailsImpl;
 import com.example.yoyakhaezoom.service.ArticleService;
+import com.example.yoyakhaezoom.service.ScheduledCrawlingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class ArticleController {
     private final ArticleService articleService;
     private final LikeRepository likeRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final ScheduledCrawlingService scheduledCrawlingService;
 
     @Operation(summary = "뉴스 기사 요약 요청", description = "뉴스 기사 원문 URL을 받아 AI 요약을 요청하고 DB에 저장합니다. (로그인 필요)")
     @PostMapping("/articles/summarize")
@@ -133,5 +135,12 @@ public class ArticleController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(responseDtos);
+    }
+
+    @Operation(summary = "[테스트용] 수동 크롤링 실행", description = "자동 크롤링 기능을 지금 즉시 강제로 실행합니다.")
+    @PostMapping("/admin/crawling-test")
+    public ResponseEntity<String> manualCrawling() {
+        scheduledCrawlingService.crawlLatestNews();
+        return ResponseEntity.ok("수동 크롤링 실행 완료. 서버 로그를 확인하세요.");
     }
 }
