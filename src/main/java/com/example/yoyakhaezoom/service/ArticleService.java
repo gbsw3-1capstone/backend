@@ -1,10 +1,12 @@
 package com.example.yoyakhaezoom.service;
 
+import com.example.yoyakhaezoom.dto.AiSummaryDto;
 import com.example.yoyakhaezoom.dto.SummarizeRequestDto;
 import com.example.yoyakhaezoom.entity.Article;
 import com.example.yoyakhaezoom.exception.CustomException;
 import com.example.yoyakhaezoom.exception.ErrorCode;
 import com.example.yoyakhaezoom.repository.ArticleRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -19,7 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${openai.api.key}")
     private String apiKey;
@@ -70,21 +72,17 @@ public class ArticleService {
                 .map(element -> element.attr("content"))
                 .orElse(null);
 
-        String category = UriComponentsBuilder.fromUriString(url)
-                .build().getQueryParams().getFirst("section");
-        if (category != null && category.contains("/")) {
-            category = category.split("/")[0];
-        }
-
-        log.info("Requesting summary to OpenAI for title: {}", title);
+        log.info("Requesting summary and tag to OpenAI for title: {}", title);
         String jsonSummary = getSummaryFromOpenAI(title, content);
+
+        AiSummaryDto summaryDto = objectMapper.readValue(jsonSummary, AiSummaryDto.class);
 
         Article article = Article.builder()
                 .originalUrl(url)
                 .title(title)
                 .summary(jsonSummary)
                 .imageUrl(imageUrl)
-                .category(category)
+                .category(summaryDto.getTag())
                 .build();
 
         Article savedArticle = articleRepository.save(article);
@@ -100,19 +98,25 @@ public class ArticleService {
         String prompt = String.format(
                 "[지시문]\n" +
                         "당신은 10대 청소년의 눈높이에 맞춰 최신 뉴스를 쉽고 재미있게 설명해주는 '요약해줌' 서비스의 AI 뉴스 튜터입니다.\n" +
-                        "아래의 [기사 제목]과 [기사 내용]을 읽고, 반드시 다음 [출력 형식]에 맞춰 유효한 JSON 객체로만 응답해주세요.\n" +
+                        "아래의 [기사 제목]과 [기사 내용]을 읽고, 반드시 다음 [출력 규칙]과 [출력 형식]에 맞춰 유효한 JSON 객체로만 응답해주세요.\n" +
                         "JSON 코드 블록이나 다른 설명 없이, 순수한 JSON 텍스트만 출력해야 합니다.\n\n" +
                         "[기사 제목]\n%s\n\n" +
                         "[기사 내용]\n%s\n\n" +
+                        "[출력 규칙]\n" +
+                        "1. 먼저 기사 내용을 분석하여 다음 4개의 대분류 태그 중 가장 적합한 것 하나를 결정합니다: [시사, 문화, IT, 스포츠]\n" +
+                        "2. 결정된 대분류 태그에 따라 소분류 태그를 결정합니다.\n" +
+                        "   - 대분류가 '시사'이면, 소분류는 [정치, 경제, 사회, 국제] 중에서 선택합니다.\n" +
+                        "   - 대분류가 '문화'이면, 소분류는 [문화/생활, 연예] 중에서 선택합니다.\n" +
+                        "   - 대분류가 'IT'이면, 소분류는 [기술, 테크] 중에서 선택합니다.\n" +
+                        "   - 대분류가 '스포츠'이면, 소분류는 '스포츠'로 고정합니다.\n" +
+                        "3. 'summaryHighlight'는 기사 전체의 핵심을 한 문장으로 매우 흥미롭게 요약합니다.\n" +
+                        "4. 'coreSummary'는 3~4문장으로 핵심 내용을 작성합니다.\n\n" +
                         "[출력 형식]\n" +
                         "{\n" +
-                        "  \"summaryHighlight\": \"(기사 전체를 한 문장으로 매우 매력적이고 흥미롭게 요약)\",\n" +
-                        "  \"coreSummary\": \"(3~4문장의 핵심 요약을 친근한 해요체로 작성)\",\n" +
-                        "  \"terms\": [\n" +
-                        "    { \"term\": \"(본문의 어려운 용어 1)\", \"explanation\": \"(용어1의 쉬운 설명)\" },\n" +
-                        "    { \"term\": \"(본문의 어려운 용어 2)\", \"explanation\": \"(용어2의 쉬운 설명)\" }\n" +
-                        "  ],\n" +
-                        "  \"discussionPoint\": \"(이 뉴스와 관련해 생각해볼 만한 흥미로운 질문 1가지)\"\n" +
+                        "  \"tag\": \"(규칙 1에서 결정된 대분류 태그)\",\n" +
+                        "  \"small_tag\": \"(규칙 2에서 결정된 소분류 태그)\",\n" +
+                        "  \"summaryHighlight\": \"(규칙 3에 따른 한 문장 요약)\",\n" +
+                        "  \"coreSummary\": \"(규칙 4에 따른 3~4문장 요약)\"\n" +
                         "}",
                 title,
                 content.substring(0, Math.min(content.length(), 3500))
@@ -125,7 +129,7 @@ public class ArticleService {
         Map<String, Object> body = new HashMap<>();
         body.put("model", "gpt-3.5-turbo");
         body.put("messages", List.of(message));
-        body.put("max_tokens", 1000);
+        body.put("max_tokens", 1500);
         body.put("temperature", 0.3);
 
         Map<String, String> responseFormat = new HashMap<>();
@@ -174,6 +178,10 @@ public class ArticleService {
                 return articleRepository.findTopArticlesByBookmarks(pageable);
             case "views":
                 return articleRepository.findTopArticlesByViewCount(pageable);
+            case "daily_views":
+                return articleRepository.findTopArticlesByDailyViewCount(pageable);
+            case "weekly_views":
+                return articleRepository.findTopArticlesByWeeklyViewCount(pageable);
             case "latest":
             default:
                 return articleRepository.findAllByOrderByCreatedAtDesc(pageable);

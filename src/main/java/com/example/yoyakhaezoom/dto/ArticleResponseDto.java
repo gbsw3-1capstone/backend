@@ -23,12 +23,13 @@ public class ArticleResponseDto {
     private final boolean bookmarked;
     private final long likeCount;
     private final long bookmarkCount;
+    private final int viewCount;
+    private final int dailyViewCount;
+    private final int weeklyViewCount;
 
-    public ArticleResponseDto(Article article, boolean liked, boolean bookmarked, long likeCount, long bookmarkCount) {
+    public ArticleResponseDto(Article article, boolean liked, boolean bookmarked) {
         this.id = article.getId();
         this.title = article.getTitle();
-        this.tag = article.getCategory();
-        this.small_tag = article.getCategory();
         this.date = article.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         this.image = article.getImageUrl();
         this.news_link = article.getOriginalUrl();
@@ -37,11 +38,16 @@ public class ArticleResponseDto {
         AiSummaryDto aiSummary = parseAiSummary(article.getSummary());
         this.summary = aiSummary.getCoreSummary();
         this.summary_highlight = aiSummary.getSummaryHighlight();
+        this.tag = aiSummary.getTag();
+        this.small_tag = aiSummary.getSmall_tag();
 
         this.liked = liked;
         this.bookmarked = bookmarked;
-        this.likeCount = likeCount;
-        this.bookmarkCount = bookmarkCount;
+        this.likeCount = article.getLikeCount();
+        this.bookmarkCount = article.getBookmarkCount();
+        this.viewCount = article.getViewCount();
+        this.dailyViewCount = article.getDailyViewCount();
+        this.weeklyViewCount = article.getWeeklyViewCount();
     }
 
     private AiSummaryDto parseAiSummary(String jsonSummary) {

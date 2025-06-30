@@ -9,7 +9,7 @@ public class LoginResponseDto {
     private String username;
     private String nickname;
 
-    public LoginResponseDto(String token, Long userId, String username, String nickname) { // 생성자 수정
+    public LoginResponseDto(String token, Long userId, String username, String nickname) {
         this.token = token;
         this.userId = userId;
         this.username = username;

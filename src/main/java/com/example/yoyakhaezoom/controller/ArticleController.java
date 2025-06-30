@@ -42,7 +42,7 @@ public class ArticleController {
             return ResponseEntity.status(401).build();
         }
         Article summarizedArticle = articleService.summarizeAndSaveArticle(requestDto);
-        return ResponseEntity.ok(new ArticleResponseDto(summarizedArticle, false, false, 0L, 0L));
+        return ResponseEntity.ok(new ArticleResponseDto(summarizedArticle, false, false));
     }
 
     @Operation(summary = "전체 요약 기사 목록 조회", description = "지금까지 요약된 모든 기사 목록을 최신순으로 조회합니다.")
@@ -66,10 +66,10 @@ public class ArticleController {
             isLiked = likeRepository.findByUserAndArticle(user, article).isPresent();
             isBookmarked = bookmarkRepository.findByUserAndArticle(user, article).isPresent();
         }
-        return ResponseEntity.ok(new ArticleResponseDto(article, isLiked, isBookmarked, article.getLikeCount(), article.getBookmarkCount()));
+        return ResponseEntity.ok(new ArticleResponseDto(article, isLiked, isBookmarked));
     }
 
-    @Operation(summary = "요약 기사 랭킹 조회", description = "정렬 기준(latest, likes, bookmarks, views)에 따라 기사 목록을 조회합니다.")
+    @Operation(summary = "요약 기사 랭킹 조회", description = "정렬 기준(latest, likes, bookmarks, views, daily_views, weekly_views)에 따라 기사 목록을 조회합니다.")
     @GetMapping("/articles/ranking")
     public ResponseEntity<List<ArticleResponseDto>> getArticleRanking(
             @RequestParam(defaultValue = "latest") String sortBy,
@@ -122,9 +122,7 @@ public class ArticleController {
                 .map(article -> new ArticleResponseDto(
                         article,
                         finalLikedIds.contains(article.getId()),
-                        finalBookmarkedIds.contains(article.getId()),
-                        article.getLikeCount(),
-                        article.getBookmarkCount()
+                        finalBookmarkedIds.contains(article.getId())
                 ))
                 .collect(Collectors.toList());
     }

@@ -23,4 +23,10 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     @Query("SELECT a FROM Article a ORDER BY a.viewCount DESC, a.createdAt DESC")
     List<Article> findTopArticlesByViewCount(Pageable pageable);
+
+    @Query("SELECT a FROM Article a ORDER BY a.dailyViewCount DESC, a.createdAt DESC")
+    List<Article> findTopArticlesByDailyViewCount(Pageable pageable);
+
+    @Query("SELECT a FROM Article a ORDER BY a.weeklyViewCount DESC, a.createdAt DESC")
+    List<Article> findTopArticlesByWeeklyViewCount(Pageable pageable);
 }
