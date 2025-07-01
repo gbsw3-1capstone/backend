@@ -82,7 +82,7 @@ public class ArticleService {
                 .title(title)
                 .summary(jsonSummary)
                 .imageUrl(imageUrl)
-                .category(summaryDto.getTag())
+                .category(summaryDto.getTag2())
                 .build();
 
         Article savedArticle = articleRepository.save(article);
@@ -103,18 +103,22 @@ public class ArticleService {
                         "[기사 제목]\n%s\n\n" +
                         "[기사 내용]\n%s\n\n" +
                         "[출력 규칙]\n" +
-                        "1. 먼저 기사 내용을 분석하여 다음 4개의 대분류 태그 중 가장 적합한 것 하나를 결정합니다: [시사, 문화, IT, 스포츠]\n" +
-                        "2. 결정된 대분류 태그에 따라 소분류 태그를 결정합니다.\n" +
-                        "   - 대분류가 '시사'이면, 소분류는 [정치, 경제, 사회, 국제] 중에서 선택합니다.\n" +
-                        "   - 대분류가 '문화'이면, 소분류는 [문화/생활, 연예] 중에서 선택합니다.\n" +
-                        "   - 대분류가 'IT'이면, 소분류는 [기술, 테크] 중에서 선택합니다.\n" +
-                        "   - 대분류가 '스포츠'이면, 소분류는 '스포츠'로 고정합니다.\n" +
+                        "1. 먼저 기사 내용을 분석하여 다음 4개의 대분류 태그 중 가장 적합한 것 하나를 한국어와 영어로 결정합니다:\n" +
+                        "   - 한국어: [시사, 문화, IT, 스포츠]\n" +
+                        "   - 영어: [Politics/Economy/Society/International, Culture/Entertainment, IT/Tech, Sports]\n" +
+                        "2. 결정된 대분류 태그에 따라 소분류 태그를 한국어와 영어로 결정합니다.\n" +
+                        "   - 대분류가 '시사'이면, 소분류는 [정치, 경제, 사회, 국제] (한국어) 및 [Politics, Economy, Society, International] (영어) 중에서 선택합니다.\n" +
+                        "   - 대분류가 '문화'이면, 소분류는 [문화/생활, 연예] (한국어) 및 [Culture/Life, Entertainment] (영어) 중에서 선택합니다.\n" +
+                        "   - 대분류가 'IT'이면, 소분류는 [기술, 테크] (한국어) 및 [Technology, Tech] (영어) 중에서 선택합니다.\n" +
+                        "   - 대분류가 '스포츠'이면, 소분류는 '스포츠' (한국어) 및 'Sports' (영어)로 고정합니다.\n" +
                         "3. 'summaryHighlight'는 기사 전체의 핵심을 한 문장으로 매우 흥미롭게 요약합니다.\n" +
                         "4. 'coreSummary'는 3~4문장으로 핵심 내용을 작성합니다.\n\n" +
                         "[출력 형식]\n" +
                         "{\n" +
-                        "  \"tag\": \"(규칙 1에서 결정된 대분류 태그)\",\n" +
-                        "  \"small_tag\": \"(규칙 2에서 결정된 소분류 태그)\",\n" +
+                        "  \"tag\": \"(규칙 1에서 결정된 영어 대분류 태그)\",\n" +
+                        "  \"tag2\": \"(규칙 1에서 결정된 한국어 대분류 태그)\",\n" +
+                        "  \"small_tag\": \"(규칙 2에서 결정된 영어 소분류 태그)\",\n" +
+                        "  \"small_tag2\": \"(규칙 2에서 결정된 한국어 소분류 태그)\",\n" +
                         "  \"summaryHighlight\": \"(규칙 3에 따른 한 문장 요약)\",\n" +
                         "  \"coreSummary\": \"(규칙 4에 따른 3~4문장 요약)\"\n" +
                         "}",
@@ -186,5 +190,10 @@ public class ArticleService {
             default:
                 return articleRepository.findAllByOrderByCreatedAtDesc(pageable);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Long getLatestArticleId() {
+        return articleRepository.findMaxId().orElse(null);
     }
 }

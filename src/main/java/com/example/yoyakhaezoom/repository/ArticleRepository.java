@@ -29,4 +29,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     @Query("SELECT a FROM Article a ORDER BY a.weeklyViewCount DESC, a.createdAt DESC")
     List<Article> findTopArticlesByWeeklyViewCount(Pageable pageable);
+
+    @Query("SELECT max(a.id) FROM Article a")
+    Optional<Long> findMaxId();
 }

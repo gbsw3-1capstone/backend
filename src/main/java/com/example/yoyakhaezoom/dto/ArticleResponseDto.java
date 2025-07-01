@@ -12,7 +12,9 @@ public class ArticleResponseDto {
     private final Long id;
     private final String title;
     private final String tag;
+    private final String tag2;
     private final String small_tag;
+    private final String small_tag2;
     private final String date;
     private final String summary;
     private final String summary_highlight;
@@ -39,7 +41,9 @@ public class ArticleResponseDto {
         this.summary = aiSummary.getCoreSummary();
         this.summary_highlight = aiSummary.getSummaryHighlight();
         this.tag = aiSummary.getTag();
+        this.tag2 = aiSummary.getTag2();
         this.small_tag = aiSummary.getSmall_tag();
+        this.small_tag2 = aiSummary.getSmall_tag2();
 
         this.liked = liked;
         this.bookmarked = bookmarked;
