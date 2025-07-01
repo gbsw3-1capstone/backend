@@ -6,10 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="ed917437-d587-473b-b970-088bc3f6a43a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/dto/AiSummaryDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/dto/AiSummaryDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/dto/ArticleResponseDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/dto/ArticleResponseDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/repository/ArticleRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/repository/ArticleRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/service/ArticleService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/service/ArticleService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/controller/ArticleController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/yoyakhaezoom/controller/ArticleController.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

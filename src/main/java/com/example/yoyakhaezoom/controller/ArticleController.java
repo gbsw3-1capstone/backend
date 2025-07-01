@@ -12,6 +12,7 @@ import com.example.yoyakhaezoom.service.ScheduledCrawlingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,6 +53,16 @@ public class ArticleController {
         List<Article> articles = articleService.getArticles();
         List<ArticleResponseDto> responseDtos = mapArticlesToResponseDtos(articles, userDetails);
         return ResponseEntity.ok(responseDtos);
+    }
+
+    @Operation(summary = "가장 최신 기사 ID 조회", description = "가장 최근에 생성된 기사의 ID를 조회하여 JSON 형태로 반환합니다.")
+    @GetMapping("/articles/max-id")
+    public ResponseEntity<Map<String, Long>> getLatestArticleId() {
+        Long latestId = articleService.getLatestArticleId();
+        if (latestId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(Map.of("max_id", latestId));
     }
 
     @Operation(summary = "특정 요약 기사 상세 조회", description = "ID를 이용하여 특정 요약 기사 한 개의 상세 정보(좋아요, 북마크 여부 포함)를 조회합니다.")
